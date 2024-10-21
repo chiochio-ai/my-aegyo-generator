@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>애교 랜덤 생성기 / Aegyo Random Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #FF1493;
+        }
+        p {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+        #langButtons {
+            margin-bottom: 20px;
+        }
+        #allAegyoContainer {
+            text-align: left;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="langButtons">
+        <button onclick="changeLang('ko')">한국어</button>
+        <button onclick="changeLang('en')">English</button>
+    </div>
+    <div class="container">
+        <h1 id="title">애교 랜덤 생성기</h1>
+        <input type="text" id="titleInput" placeholder="애교 제목을 입력하세요">
+        <input type="text" id="contentInput" placeholder="애교 문장을 입력하세요">
+        <button id="addButton">등록</button>
+        <button id="randomButton">랜덤 애교</button>
+        <button id="allButton">모든 애교</button>
+        <p id="output"></p>
+        <div id="allAegyoContainer"></div>
+    </div>
+    <script>
+        let currentLang = 'ko';
+        const translations = {
+            ko: {
+                title: '애교 랜덤 생성기',
+                titlePlaceholder: '애교 제목을 입력하세요',
+                contentPlaceholder: '애교 문장을 입력하세요',
+                addButton: '등록',
+                randomButton: '랜덤 애교',
+                allButton: '모든 애교',
+                noAegyo: '등록된 애교 문장이 없습니다!',
+                registeredAegyo: '애교 문장이 등록되었습니다!',
+                pleaseEnterAegyo: '애교 제목과 문장을 입력해주세요.'
+            },
+            en: {
+                title: 'Aegyo Random Generator',
+                titlePlaceholder: 'Enter aegyo title',
+                contentPlaceholder: 'Enter aegyo phrase',
+                addButton: 'Register',
+                randomButton: 'Random Aegyo',
+                allButton: 'All Aegyo',
+                noAegyo: 'No aegyo phrases registered!',
+                registeredAegyo: 'Aegyo phrase has been registered!',
+                pleaseEnterAegyo: 'Please enter both aegyo title and phrase.'
+            }
+        };
+
+        const titleInput = document.getElementById('titleInput');
+        const contentInput = document.getElementById('contentInput');
+        const addButton = document.getElementById('addButton');
+        const randomButton = document.getElementById('randomButton');
+        const allButton = document.getElementById('allButton');
+        const output = document.getElementById('output');
+        const allAegyoContainer = document.getElementById('allAegyoContainer');
+
+        let koAegyoPhrases = [];
+        let enAegyoPhrases = [];
+
+        function updateSessionStorage() {
+            try {
+                sessionStorage.setItem('koAegyoPhrases', JSON.stringify(koAegyoPhrases));
+                sessionStorage.setItem('enAegyoPhrases', JSON.stringify(enAegyoPhrases));
+            } catch (e) {
+                console.error('Error saving to sessionStorage:', e);
+            }
+        }
+
+        function loadFromSessionStorage() {
+            try {
+                const koData = sessionStorage.getItem('koAegyoPhrases');
+                const enData = sessionStorage.getItem('enAegyoPhrases');
+                koAegyoPhrases = koData ? JSON.parse(koData) : [];
+                enAegyoPhrases = enData ? JSON.parse(enData) : [];
+            } catch (e) {
+                console.error('Error loading from sessionStorage:', e);
+                koAegyoPhrases = [];
+                enAegyoPhrases = [];
+            }
+        }
+
+        function changeLang(lang) {
+            currentLang = lang;
+            document.getElementById('title').textContent = translations[lang].title;
+            titleInput.placeholder = translations[lang].titlePlaceholder;
+            contentInput.placeholder = translations[lang].contentPlaceholder;
+            addButton.textContent = translations[lang].addButton;
+            randomButton.textContent = translations[lang].randomButton;
+            allButton.textContent = translations[lang].allButton;
+            displayAllPhrases();
+        }
+
+        function displayAllPhrases() {
+            const phrases = currentLang === 'ko' ? koAegyoPhrases : enAegyoPhrases;
+            if (phrases.length === 0) {
+                allAegyoContainer.textContent = translations[currentLang].noAegyo;
+            } else {
+                allAegyoContainer.innerHTML = phrases.map(phrase => 
+                    `<p><strong>${phrase.title}:</strong> ${phrase.content}</p>`
+                ).join('');
+            }
+        }
+
+        addButton.addEventListener('click', () => {
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            if (title && content) {
+                const phrases = currentLang === 'ko' ? koAegyoPhrases : enAegyoPhrases;
+                phrases.push({ title, content });
+                updateSessionStorage();
+                titleInput.value = '';
+                contentInput.value = '';
+                alert(translations[currentLang].registeredAegyo);
+                displayAllPhrases();
+            } else {
+                alert(translations[currentLang].pleaseEnterAegyo);
+            }
+        });
+
+        randomButton.addEventListener('click', () => {
+            const phrases = currentLang === 'ko' ? koAegyoPhrases : enAegyoPhrases;
+            if (phrases.length === 0) {
+                output.textContent = translations[currentLang].noAegyo;
+            } else {
+                const randomIndex = Math.floor(Math.random() * phrases.length);
+                const randomPhrase = phrases[randomIndex];
+                output.innerHTML = `<strong>${randomPhrase.title}:</strong> ${randomPhrase.content}`;
+            }
+        });
+
+        let allAegyoVisible = false;
+        allButton.addEventListener('click', () => {
+            allAegyoVisible = !allAegyoVisible;
+            allAegyoContainer.style.display = allAegyoVisible ? 'block' : 'none';
+            displayAllPhrases();
+        });
+
+        loadFromSessionStorage();
+        changeLang('ko');
+        allAegyoContainer.style.display = 'none';
+    </script>
+</body>
+</html>
